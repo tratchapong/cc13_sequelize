@@ -1,106 +1,122 @@
 const { Sequelize, DataTypes, QueryTypes, Op} = require("sequelize");
 
-const sequelize = new Sequelize({
-  host: 'localhost',
-  username: 'root',
-  password: 'Codecamp2021',
-  database: 'cc13_seqlab',
-  dialect: 'mysql'
-})
-
-// sequelize.authenticate().then( ()=> console.log('OK')).catch(err => console.log(err))
-
-// const User = sequelize.define('USER', {
-//   username: DataTypes.STRING,
-//   birth: DataTypes.DATEONLY
-// })
-
-// User.sync({force:true})
-
-// console.log(User.tableName)
-
-// User.create({username: 'Andy', birth: '2000-02-03'}).then( console.log)
-
-// User.findAll().then( rs=> {
-//   console.log(JSON.stringify(rs, null, 2))
-// })
-
-// User.findAll({
-//   where : {id : 2}
-// }).then(rs=>console.log(rs[0].username))
-
-
-const Product = sequelize.define('product', {
-  ProductID : {
-    type : DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  ProductName : DataTypes.STRING,
-  SupplierID: DataTypes.INTEGER,
-  Unit: DataTypes.STRING,
-  Price: DataTypes.DECIMAL(10,2)
-},{
-  timestamps: false
-})
-
-// Product.findAll().then(rs => {
-//   console.log(JSON.stringify(rs, null, 2))
-// })
-
-const Category = sequelize.define('category', {
-  CategoryID : {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  CategoryName : DataTypes.STRING,
-  Description: DataTypes.STRING
-},{
-  timestamps: false,
-  underscored: false
-})
-
-// Category.findByPk(4).then(rs => {
-//   console.log(JSON.stringify(rs,null,2))
-// })
-
-// Category.findAll().then(rs => {
-//   console.log(JSON.stringify(rs,null,2))
-// })
-
-// ------------------------------
-
-// let sql = `
-// Select CategoryName, ProductID, ProductName, Price
-// from categories
-// join products
-// on products.CategoryID=categories.CategoryID
-// where categories.CategoryID=7
-// `
-
-// sequelize.query(sql).then( rs => {
-//   console.log(rs[0][1].Price)
-// })
-
-// ------------------------------
-function nice(jss) {
-  console.log(JSON.stringify(jss, null, 2))
-}
-
-Category.hasMany(Product, {
-  foreignKey : 'CategoryID'
-})
-Product.belongsTo(Category,{
-  foreignKey : 'CategoryID'
-})
+const { sequelize, Product, Category, Supplier, nice} = require('./models')
 
 // Product.findAll({
-//   attributes: ['ProductID','ProductName','price'],
-//   include: {model: Category , attributes: ['categoryid','CategoryName']},
-//   where: { CategoryID : 4} 
-// }).then( nice )
+//   attributes: [
+//     'ProductID', 'ProductName',
+//     [sequelize.fn('COUNT', sequelize.col('ProductID')), 'n_ProductID'],
+//     'CategoryID'
+//   ],
+//   include : Category
+// }).then(nice);
 
-Category.findAll({
-  include: {model: Product, where: { price: {[Op.gt] : 100 }}},
-}).then( nice)
+// for( k in Product) 
+//   console.log( k )
+
+// Product.findAll({
+//   attributes: ['ProductID', 'Productname', 'CategoryID'],
+//   where : {ProductID : 4},
+//   include: Category
+// }).then(nice)
+
+// Category.findAll({
+//   where : { CategoryID : 5},
+//   include : Product
+// }).then(nice)
+
+// console.log(Product.rawAttributes)
+
+// Supplier.findAll({
+//   attributes: ['SupplierID', 'SupplierName'],
+//   include : {
+//     model : Product,
+//     attributes: ['ProductName'],
+//     where : { CategoryID: 1},
+//     include: {
+//       model: Category,
+//       attributes: ['CategoryName']
+//     }
+//   }
+// }).then(nice)
+
+
+// Supplier.findAll({
+//   attributes: ['SupplierID', 'SupplierName'],
+//   include : {
+//     model : Product,
+//     attributes: ['ProductName'],
+//     where : { CategoryID: 1},
+//     include: {
+//       model: Category,
+//       attributes: ['CategoryName']
+//     }
+//   }
+// }).then(rs => {
+
+//   // nice(rs[1].products[0].category.CategoryName)
+  
+//   let output = rs.map( el => ({ SupName: el.SupplierName, ProName: el.products[0].ProductName }))
+//   output = { 
+//     category_name : rs[0].products[0].category.CategoryName,
+//     Sup_Prod : output 
+//   }
+//   console.log(output)
+// })
+
+
+// Product.findAll({
+//   attributes: [
+//     'SupplierID',
+//   ],
+//   where: {CategoryID : 3},
+//   include : [
+//     { model : Category, attributes: ['CategoryName']},
+//     { model : Supplier, attributes: ['SupplierName']}
+//   ],
+//   order: ['SupplierID']
+// }).then(rs => {
+//   nice(rs)
+// })
+
+// Product.findAll({
+//   attributes: [
+//     'SupplierID',
+//     [sequelize.fn('COUNT', sequelize.col('ProductID')), 'NumberOfProduct'],
+//   ],
+//   where: {CategoryID : 3},
+//   group: 'SupplierID',
+//   include : [
+//     { model : Category, attributes: ['CategoryName']},
+//     { model : Supplier, attributes: ['SupplierName']}
+//   ],
+// }).then(rs => {
+//   nice(rs)
+// })
+
+Product.findAll({
+  attributes: [
+    'SupplierID',
+    [sequelize.fn('COUNT', sequelize.col('ProductID')), 'NumberOfProduct'],
+  ],
+  where: {CategoryID : 3},
+  group: 'SupplierID',
+  include : [
+    { model : Category, attributes: ['CategoryName']},
+    { model : Supplier, attributes: ['SupplierName']}
+  ],  
+  raw: true,
+  nest: true
+}).then(rs => {
+  nice(rs[0])
+  // console.log(rs[0].num)
+  // let x = JSON.parse(JSON.stringify(rs[0]))
+  // console.log(x.num)
+  
+  let out = rs.map(el => ({
+    supplier: el.supplier.SupplierName,
+    NumberOfProduct: el.NumberOfProduct  
+  }))
+  out = {category: rs[0].category.CategoryName, suppliers : out}
+  console.log(out)
+})

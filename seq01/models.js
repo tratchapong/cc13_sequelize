@@ -15,7 +15,8 @@ const Product = sequelize.define('product', {
     autoIncrement: true
   },
   ProductName : DataTypes.STRING,
-  SupplierID: DataTypes.INTEGER,
+  // SupplierID: DataTypes.INTEGER,
+  // CategoryID: DataTypes.INTEGER,
   Unit: DataTypes.STRING,
   Price: DataTypes.DECIMAL(10,2)
 },{
@@ -32,7 +33,25 @@ const Category = sequelize.define('category', {
   Description: DataTypes.STRING
 },{
   timestamps: false,
-  underscored: false
+  // underscored: false
+})
+
+const Supplier = sequelize.define('supplier', {
+  SupplierID : {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  SupplierName : DataTypes.STRING,
+  ContactName: DataTypes.STRING,
+  Address : DataTypes.STRING,
+  City : DataTypes.STRING,
+  PostalCode: DataTypes.STRING,
+  Country: DataTypes.STRING,
+  Phone : DataTypes.STRING,
+},{
+  timestamps: false
 })
 
 Category.hasMany(Product, {
@@ -42,9 +61,16 @@ Product.belongsTo(Category,{
   foreignKey : 'CategoryID'
 })
 
+Supplier.hasMany(Product, {
+  foreignKey: 'SupplierID'
+})
+Product.belongsTo(Supplier, {
+  foreignKey: 'SupplierID'
+})
+
 
 function nice(jss) {
   console.log(JSON.stringify(jss, null, 2))
 }
 
-module.exports = {Product, Category, nice}
+module.exports = {sequelize, Product, Category, Supplier, nice}
